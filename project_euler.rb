@@ -1,3 +1,6 @@
+require 'prime'
+require 'awesome_print'
+
 class Integer
 	def is_prime(list = false)
 	    if list
@@ -43,8 +46,8 @@ end
 
 def problem4
 	all_pals = []
-	for i in 100...1000 do
-		for j in 100...1000 do
+	(100...1000).each do |i|
+		(100...1000).each do |j|
 			mult = i * j
 			all_pals << mult if mult.is_palindrome
 		end
@@ -88,15 +91,7 @@ end
 
 def problem8
 	bignum = "7316717653133062491922511967442657474235534919493496983520312774506326239578318016984801869478851843858615607891129494954595017379583319528532088055111254069874715852386305071569329096329522744304355766896648950445244523161731856403098711121722383113622298934233803081353362766142828064444866452387493035890729629049156044077239071381051585930796086670172427121883998797908792274921901699720888093776657273330010533678812202354218097512545405947522435258490771167055601360483958644670632441572215539753697817977846174064955149290862569321978468622482839722413756570560574902614079729686524145351004748216637048440319989000889524345065854122758866688116427171479924442928230863465674813919123162824586178664583591245665294765456828489128831426076900422421902267105562632111110937054421750694165896040807198403850962455444362981230987879927244284909188845801561660979191338754992005240636899125607176060588611646710940507754100225698315520005593572972571636269561882670428252483600823257530420752963450"
-	prod = 0
-	for i in 0..995
-		cur_prod = 1
-		(0..4).each {|j|
-			cur_prod *= bignum[i+j].to_i
-		}
-		prod = cur_prod if cur_prod > prod
-	end
-	prod
+	(0..995).map {|i| bignum[i..(i + 4)].chars.map(&:to_i).inject(&:*)}.max
 end
 
 def problem9
@@ -115,27 +110,7 @@ def problem9
 end
 
 def problem10
-	two_mil_nums = [0]
-	(1...2_000_000).each { |i|
-		two_mil_nums[i] = i
-	}
-	two_mil_nums[1] = 0
-	counter = 2
-	while counter < two_mil_nums.length
-		if two_mil_nums[counter] != 0
-			i = counter * 2
-			while i < two_mil_nums.length
-				two_mil_nums[i] = 0
-				i += counter
-			end
-		end
-		counter += 1
-	end
-	sum = 0
-	two_mil_nums.each { |num|
-		sum += num
-	}
-	puts sum
+	Prime.instance.each(2_000_000).inject(&:+)
 end
 
 def problem11
@@ -189,74 +164,90 @@ def check_dir(nums, dir)
   biggest
 end
 
-puts problem11
-
 def problem12
-  def generate_triangle_nums
-    Enumerator.new do |yielder|
-      i = 0
-      tri_num = 0
-      loop do
-        i += 1
-        tri_num += i
-        yielder.yield tri_num
-      end
-    end
+	primes_list = [].tap {|list| Prime.instance.each(1_000_000) {|prime| list << prime} }
+	puts "list assembled"
+	shortened_primes_list = primes_list[0,13]
+	i = 0
+  (1..13).each do |i|
+  	shortened_primes_list.combination(i).each do |combo|
+  		product = combo.inject(&:*)
+  		the_factors = (1...combo.size).map do |num|
+        combo.combination(num).map do |mini_combo|
+          mini_combo.inject(&:*)
+        end # [6,10...]
+      end.flatten << 1 << product # [2,3...6,10...]
+      if i == 1000
+  			i = 0
+  			puts "here"
+  		end
+  		i += 1
+  	  return product if is_triangle_num?(product, generate_triangle_nums) && the_factors.length >= 180
+  	end
   end
+end
 
-  def is_triangle_num?(num, tri_num_gen)
-    tri_num_gen.each do |tri_num|
-      return true if tri_num == num
-      return false if tri_num > num
-    end
+
+
+
+
+#   tri_num_gen = generate_triangle_nums
+#   to_print_scale = 10_000
+#   tri_num_gen.each do |num|
+#   	# factors = prime_factors(num)
+#   	# if factors.length >= 6
+#   		if num > to_print_scale
+#   			puts to_print_scale
+#   			if to_print_scale < 1000000
+#   				to_print_scale *= 10
+#   			else
+#   				to_print_scale += 1000000
+#   			end
+#   		end
+#     	return num if factors_from_primes(num, prime_factors(num, primes_list)).size >= 200
+#     # end
+#   end
+# end
+
+def prime_factors(num, primes_list)
+	[].tap do |primes|
+  	primes_list.each {|prime|
+  		return primes if prime > num
+  		primes << prime if num % prime == 0
+    }
   end
+end
 
-  tri_num_gen = generate_triangle_nums
+def factors(num)
+  (1..Math.sqrt(num)).select{|factor| num % factor == 0} << num
+end
 
+def factors_from_primes(num, factors)
+	[].tap do |verified_factors|
+		[factors<<1].permutation(factors.length + 1).each do |set|
+				product = set.inject(&:*)
+				verified_factors << product if num % product == 0
+		end
+	end.uniq
+end
 
-
-  def factors(num)
-    puts "checking factors for #{num}"
-    fax = (1..num/2).select{|factor| num % factor == 0} << num
-    puts "#{fax.size} factors found."
-    fax
-  end
-
-  def within_1000_tris(tri_num_gen)
-    i = 1000
-    last_num = within_100_000_tris
-    tri_num_gen.each do |num|
+def generate_triangle_nums
+  Enumerator.new do |yielder|
+    i = 0
+    tri_num = 0
+    loop do
       i += 1
-      if i > 1000
-        return last_num if factors(num).size >= 500
-        i = 0
-        last_num = num
-      end
-    end
-  end
-
-  def within_100_000_tris
-    tri_num_gen = generate_triangle_nums
-    i = 100_000
-    last_num = 1
-    tri_num_gen.each do |num|
-      i += 1
-      if i > 100_000
-        return last_num if factors(num).size >= 500
-        i = 0
-        last_num = num
-      end
-    end
-  end
-
-  tri_num_gen = generate_triangle_nums
-  close_num = within_1000_tris(tri_num_gen)
-  tri_num_gen = generate_triangle_nums
-  tri_num_gen.each do |num|
-    if num > last_num
-      return num if factors(num).size >= 500
+      tri_num += i
+      yielder.yield tri_num
     end
   end
 end
 
-puts problem12
+def is_triangle_num?(num, tri_num_gen)
+  tri_num_gen.each do |tri_num|
+    return true if tri_num == num
+    return false if tri_num > num
+  end
+end
+
+ap problem8
