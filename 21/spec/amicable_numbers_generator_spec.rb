@@ -5,7 +5,7 @@ describe AmicableNumbersGenerator do
   let(:gen) {AmicableNumbersGenerator.generator}
   
   it "generates a new enumerator" do
-    expect(gen).to be_an AmicableNumbersGenerator
+    expect(gen).to be_an Enumerator
   end
 
   it "generates pairs of amicable numbers" do

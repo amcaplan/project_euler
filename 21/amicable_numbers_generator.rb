@@ -1,13 +1,12 @@
 require_relative '../12/factorizer'
+require 'set'
 
 class AmicableNumbersGenerator
-  include Enumerable
-
   attr_reader :used_pairs, :enum
   attr_accessor :i
 
   def self.generator
-    self.new
+    self.new.enum
   end
 
   def initialize
@@ -16,27 +15,30 @@ class AmicableNumbersGenerator
   end
 
   def restart
-    @used_pairs = {}
+    @used_pairs = Set.new
     @i = 1
   end
 
-  def generate_enum
-    @enum = Enumerator.new do |yielder|
-      while self.i += 1
-        other_num = factorize(self.i).inject(:+)
-        if new_pair?(self.i, other_num)
-          @used_pairs[other_num] = self.i
-          yielder << [self.i, other_num]
+  private
+    def generate_enum
+      @enum = Enumerator.new do |yielder|
+        loop do
+          self.i += 1
+          other_num = factor_sum(self.i)
+
+          if new_pair?(self.i, other_num)
+            self.used_pairs << other_num
+            yielder << [self.i, other_num]
+          end
         end
       end
+      add_restart_to_enum
     end
-  end
 
-  def method_missing(meth, *args, &block)
-    self.enum.send(meth, *args, &block)
-  end
+    def factor_sum(num)
+      factorize(num).inject(:+)
+    end
 
-  private
     def factorize(num)
       factors = Factorizer.new.factors(num)
       factors.pop
@@ -48,10 +50,15 @@ class AmicableNumbersGenerator
     end
 
     def are_pair?(a, b)
-      factorize(b).inject(:+) == a
+      factor_sum(b) == a
     end
 
     def is_unused?(num)
-      !self.used_pairs[num]
+      !self.used_pairs.include?(num)
+    end
+
+    def add_restart_to_enum
+      gen = self
+      self.enum.define_singleton_method(:restart) { gen.restart }
     end
 end
