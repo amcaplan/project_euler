@@ -7,8 +7,12 @@ class StringEvaluator
 
   def value
     self.string.each_char.map {|char|
-      value = char.ord
-      value.between?(64, 91) ? value - 64 : 0
+      value = char.ord - pre_alphabet
+      value.between?(0,27) ? value : 0
     }.inject(:+)
+  end
+
+  def pre_alphabet
+    'A'.ord - 1
   end
 end
