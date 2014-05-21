@@ -40,9 +40,7 @@ class AmicableNumbersGenerator
     end
 
     def factorize(num)
-      factors = Factorizer.new.factors(num)
-      factors.pop
-      factors << 1
+      Factorizer.new.factors(num)
     end
 
     def new_pair?(a, b)
