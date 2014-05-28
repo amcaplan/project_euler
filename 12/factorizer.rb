@@ -1,16 +1,15 @@
 require 'prime'
 
 class Factorizer
+
   def factors(num)
     all_multiplied_combinations(prime_factorization(num))
   end
 
   private
     def all_multiplied_combinations(numbers)
-      [].tap do |combinations|
-        (0...numbers.size).each do |combo_size|
-          combinations.concat all_combinations_multiplied(numbers, combo_size)
-        end
+      (0...numbers.size).flat_map do |combo_size|
+        all_combinations_multiplied(numbers, combo_size)
       end
     end
 
@@ -21,12 +20,10 @@ class Factorizer
     end
 
     def prime_factorization(num)
-      [].tap do |factors|
-        Prime.prime_division(num).each do |num_and_exponent|
-          num = num_and_exponent[0]
-          exponent = num_and_exponent[1]
-          exponent.times {factors << num}
-        end
+      Prime.prime_division(num).flat_map do |num_and_exponent|
+        num = num_and_exponent[0]
+        exponent = num_and_exponent[1]
+        [num] * exponent
       end
     end
 end
